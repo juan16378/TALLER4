@@ -1,5 +1,5 @@
 """
-Configuracion del proyecto Django (frontend).
+Configuración del proyecto Django (frontend).
 
 Ver: https://docs.djangoproject.com/en/5.1/topics/settings/
 """
@@ -15,12 +15,16 @@ except ImportError:
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: cambia esta clave y no la subas a un repo publico.
+# SECURITY WARNING: cambia esta clave y no la subas a un repo público.
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-cambia-esta-clave-en-produccion")
 
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+# Vercel usa un dominio dinámico *.vercel.app; se agrega automáticamente.
+if os.getenv("VERCEL_URL"):
+    ALLOWED_HOSTS.append(os.getenv("VERCEL_URL"))
+    CSRF_TRUSTED_ORIGINS = [f"https://{os.getenv('VERCEL_URL')}"]
 
 
 # Application definition
@@ -38,6 +42,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # sirve estáticos en Vercel (serverless)
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -68,6 +73,10 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
+# SQLite por defecto. En Vercel el filesystem es de solo lectura salvo /tmp,
+# así que en producción serverless conviene usar DATABASE_URL con una BD
+# externa (Postgres, etc.). Aquí solo se guarda info de sesión de Django
+# (usuarios), no los datos biométricos, que viven en el backend FastAPI.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -95,12 +104,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# --- Configuracion propia del proyecto --------------------------------------
+# --- Configuración propia del proyecto --------------------------------------
 
-# A donde redirige Django tras login/logout (auth por sesion de Django).
+# URL base del backend FastAPI (reconocimiento facial + JWT).
+FASTAPI_BASE_URL = os.getenv("FASTAPI_BASE_URL", "http://127.0.0.1:8001")
+
+# A dónde redirige Django tras login/logout (auth por sesión de Django).
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "capture:capture"
 LOGOUT_REDIRECT_URL = "accounts:login"
