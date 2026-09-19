@@ -52,6 +52,8 @@ class ImagePayload(BaseModel):
 class FaceRegisterResponse(BaseModel):
     detail: str
     total_samples: int
+    required_samples: int
+    enrollment_complete: bool
 
 
 class RecognitionResult(BaseModel):

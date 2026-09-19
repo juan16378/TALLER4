@@ -1,8 +1,10 @@
 """
-Endpoints de autenticacion: registro de usuarios y login con JWT.
+Endpoints de autenticación: registro de usuarios y login con JWT.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import deps
@@ -16,9 +18,18 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(models_db.User).filter(models_db.User.username == payload.username).first()
+    # Se valida username Y email por separado para poder dar un mensaje claro
+    # de cuál de los dos ya está en uso (en vez de dejar que la base de datos
+    # rechace el INSERT con un error 500 genérico).
+    conditions = [models_db.User.username == payload.username]
+    if payload.email:
+        conditions.append(models_db.User.email == payload.email)
+
+    existing = db.query(models_db.User).filter(or_(*conditions)).first()
     if existing:
-        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe")
+        if existing.username == payload.username:
+            raise HTTPException(status_code=400, detail="El nombre de usuario ya existe")
+        raise HTTPException(status_code=400, detail="Ese correo electrónico ya está registrado")
 
     user = models_db.User(
         username=payload.username,
@@ -26,7 +37,15 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
         hashed_password=hash_password(payload.password),
     )
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Red de seguridad ante una condición de carrera (dos registros
+        # simultáneos con el mismo username/email): evita el 500 crudo.
+        db.rollback()
+        raise HTTPException(
+            status_code=400, detail="El nombre de usuario o el correo ya están registrados"
+        )
     db.refresh(user)
     return user
 
@@ -41,7 +60,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario o contrasena incorrectos",
+            detail="Usuario o contraseña incorrectos",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

@@ -11,6 +11,7 @@ import deps
 import face_service
 import models_db
 import schemas
+from config import MIN_FACE_SAMPLES
 from database import get_db
 
 router = APIRouter(prefix="/face", tags=["face"])
@@ -35,9 +36,22 @@ def register_face(
 ):
     """
     Registra una foto de referencia del rostro del usuario autenticado.
-    Se recomienda llamar este endpoint varias veces (3-5 fotos, distintos
-    ángulos/gestos) para mejorar la precisión del reconocimiento.
+
+    Se piden varias fotos (MIN_FACE_SAMPLES, por defecto 3) en ángulos o
+    gestos distintos antes de dar por completado el registro: con una sola
+    foto, LBPH tiene muy poca información para distinguir ese rostro de
+    otro cualquiera, lo que produce falsos positivos al verificar.
+
+    Por seguridad, una vez que se junta ese mínimo de fotos la cuenta no
+    puede volver a registrar su rostro (evita que alguien con una sesión
+    ya iniciada reemplace el rostro registrado por el suyo).
     """
+    if current_user.has_face_registered:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ya tienes un rostro registrado en el sistema. Por seguridad, no es posible volver a registrarlo.",
+        )
+
     image_bytes = _decode_data_url(payload.image_base64)
 
     try:
@@ -49,12 +63,24 @@ def register_face(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    current_user.has_face_registered = True
     db.add(models_db.FaceSample(user_id=current_user.id, image_path=f"user_{current_user.id}"))
+
+    enrollment_complete = total_samples >= MIN_FACE_SAMPLES
+    if enrollment_complete:
+        current_user.has_face_registered = True
     db.commit()
 
+    if enrollment_complete:
+        detail = "Registro de rostro completado correctamente."
+    else:
+        faltan = MIN_FACE_SAMPLES - total_samples
+        detail = f"Muestra {total_samples}/{MIN_FACE_SAMPLES} guardada. Toma {faltan} foto(s) más, en un ángulo o gesto distinto."
+
     return schemas.FaceRegisterResponse(
-        detail="Rostro registrado correctamente", total_samples=total_samples
+        detail=detail,
+        total_samples=total_samples,
+        required_samples=MIN_FACE_SAMPLES,
+        enrollment_complete=enrollment_complete,
     )
 
 

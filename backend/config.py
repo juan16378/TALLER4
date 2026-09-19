@@ -33,7 +33,15 @@ FACE_SIZE = (200, 200)
 
 # Umbral de confianza LBPH (distancia). Cuanto MÁS BAJO, más parecido.
 # Valores típicos: <60 buena coincidencia, 60-90 dudosa, >90 se rechaza.
-LBPH_CONFIDENCE_THRESHOLD = float(os.getenv("LBPH_CONFIDENCE_THRESHOLD", "80"))
+# (Antes estaba en 80, es decir, aceptaba explícitamente coincidencias
+# "dudosas" — eso permitía que un rostro distinto pasara como válido.)
+LBPH_CONFIDENCE_THRESHOLD = float(os.getenv("LBPH_CONFIDENCE_THRESHOLD", "60"))
+
+# Cuántas fotos de referencia se piden en el registro antes de bloquearlo
+# de forma permanente. Entrenar con una sola foto hace que LBPH tenga muy
+# poca información para distinguir un rostro de otro (más falsos positivos);
+# con varias fotos en ángulos/gestos distintos el modelo discrimina mejor.
+MIN_FACE_SAMPLES = int(os.getenv("MIN_FACE_SAMPLES", "3"))
 
 # --- CORS ---------------------------------------------------------------
 # Orígenes permitidos para que el frontend Django pueda consumir la API.
