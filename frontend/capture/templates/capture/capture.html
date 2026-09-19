@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Captura de rostro{% endblock %}
+{% block content %}
+  <h1>Captura de rostro</h1>
+  <p>Encuadra tu rostro frente a la camara.</p>
+
+  <video id="video" width="360" height="270" autoplay playsinline muted></video>
+  <canvas id="canvas" width="360" height="270" style="display:none;"></canvas>
+
+  <div style="margin-top: 1rem;">
+    <button id="btn-register">Registrar rostro</button>
+    <button id="btn-recognize">Verificar identidad</button>
+  </div>
+
+  <div id="result" style="margin-top: 1rem;"></div>
+{% endblock %}
+
+{% block extra_head %}
+  <script src="{% static 'capture/js/camera.js' %}" defer></script>
+{% endblock %}

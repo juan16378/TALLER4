@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "accounts",
+    "capture",
 ]
 
 MIDDLEWARE = [
@@ -93,6 +94,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -100,4 +102,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # A donde redirige Django tras login/logout (auth por sesion de Django).
 LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "capture:capture"
 LOGOUT_REDIRECT_URL = "accounts:login"
