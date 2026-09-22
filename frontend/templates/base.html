@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Reconocimiento facial{% endblock %}</title>
+  <style>
+    :root { --primary: #2563eb; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      color: #1e293b;
+    }
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header a { text-decoration: none; color: var(--primary); font-weight: bold; }
+    nav a { margin-left: 1rem; color: #334155; text-decoration: none; }
+    main { max-width: 420px; margin: 3rem auto; padding: 0 1rem; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 2rem; }
+    label { display: block; margin-top: 1rem; font-weight: 600; font-size: 0.9rem; }
+    input { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+    button { margin-top: 1.5rem; width: 100%; padding: 0.6rem; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .messages { list-style: none; padding: 0; }
+    .messages li { padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 4px; background: #e2e8f0; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <a href="/">Reconocimiento facial</a>
+    <nav>
+      {% if user.is_authenticated %}
+        <span>{{ user.username }}</span>
+        <a href="{% url 'accounts:logout' %}">Cerrar sesion</a>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Iniciar sesion</a>
+        <a href="{% url 'accounts:register' %}">Crear cuenta</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    <div class="card">
+      {% if messages %}
+        <ul class="messages">
+          {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta{% endblock %}
+{% block content %}
+  <h1>Crear cuenta</h1>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<p>{{ field.help_text|safe }}</p>{% endif %}
+      {{ field.errors }}
+    {% endfor %}
+    {{ form.non_field_errors }}
+    <button type="submit">Crear cuenta</button>
+  </form>
+  <p>&iquest;Ya tienes cuenta? <a href="{% url 'accounts:login' %}">Inicia sesion</a></p>
+{% endblock %}
