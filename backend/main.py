@@ -3,6 +3,8 @@ Punto de entrada de la API FastAPI.
 
 Ejecutar en desarrollo:
     uvicorn main:app --reload --port 8001
+
+Documentación interactiva (Swagger): http://127.0.0.1:8001/docs
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +13,15 @@ from config import ALLOWED_ORIGINS
 from database import init_db
 from routers import auth, face
 
-app = FastAPI(title="API de Reconocimiento Facial")
+app = FastAPI(
+    title="API de Reconocimiento Facial",
+    description=(
+        "Backend FastAPI para el sistema de login biométrico. Provee "
+        "autenticación por JWT y endpoints de registro/reconocimiento "
+        "facial consumidos por el frontend Django."
+    ),
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,
