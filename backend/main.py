@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import ALLOWED_ORIGINS
 from database import init_db
-from routers import auth
+from routers import auth, face
 
 app = FastAPI(title="API de Reconocimiento Facial")
 
@@ -22,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(face.router)
 
 
 @app.on_event("startup")

@@ -31,3 +31,24 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+
+class ImagePayload(BaseModel):
+    """
+    Imagen capturada desde la camara del navegador (getUserMedia + canvas),
+    enviada como Data URL base64: "data:image/jpeg;base64,/9j/4AAQ...".
+    """
+
+    image_base64: str
+
+
+class FaceRegisterResponse(BaseModel):
+    detail: str
+    total_samples: int
+
+
+class RecognitionResult(BaseModel):
+    matched: bool
+    username: Optional[str] = None
+    confidence: Optional[float] = None
+    message: str
