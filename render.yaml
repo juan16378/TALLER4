@@ -1,0 +1,40 @@
+# Render Blueprint para el backend FastAPI (Taller4)
+# Uso: en Render, "New +" -> "Blueprint" -> elegir este repositorio.
+#
+# Se usa Docker (en vez del build nativo de Python) porque el sandbox nativo
+# de Render tiene el filesystem en solo lectura: apt-get falla y no hay wheels
+# para pydantic-core en Python 3.14 (que es el que Render eligió por defecto).
+# El Dockerfile usa python:3.12-slim e instala las libs de OpenCV en la imagen.
+
+services:
+  - type: web
+    name: taller4-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: backend/Dockerfile
+    # Contexto de build: la carpeta backend (ahí viven requirements.txt y el
+    # código). Ambos campos son relativos a la RAÍZ del repo; si se combina
+    # con rootDir, Render los resuelve anidados (backend/backend) y el build
+    # falla, por eso no se usa rootDir aquí.
+    dockerContext: backend
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Estas se piden al crear el servicio (no se comprometen en git).
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      # Con valores por defecto seguros para producción.
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 60
+      - key: LBPH_CONFIDENCE_THRESHOLD
+        value: "60"
+      - key: MIN_FACE_SAMPLES
+        value: "3"
+      # Orígenes permitidos (CORS). El frontend Django llama al backend desde
+      # el servidor (requests), así que no depende del CORS del navegador;
+      # se dejan ambos por si se consume la API directamente desde Swagger/JS.
+      - key: ALLOWED_ORIGINS
+        value: https://<TU-FRONTEND>.vercel.app,http://localhost:8000,http://127.0.0.1:8000
